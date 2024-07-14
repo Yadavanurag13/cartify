@@ -1,8 +1,9 @@
 from django.shortcuts import render , redirect , HttpResponseRedirect
-
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import  check_password
 from store.models.customer import Customer
 from django.views import  View
+from store.forms import CustomerProfileForm
 
 
 class Login(View):
@@ -37,3 +38,20 @@ class Login(View):
 def logout(request):
     request.session.clear()
     return redirect('login')
+
+@login_required
+def view_profile(request):
+    customer = Customer.objects.get(email=request.user.email)
+    return render(request, 'view_profile.html', {'customer': customer})
+
+@login_required
+def edit_profile(request):
+    customer = Customer.objects.get(email=request.user.email)
+    if request.method == 'POST':
+        form = CustomerProfileForm(request.POST, instance=customer)
+        if form.is_valid():
+            form.save()
+            return redirect('view_profile')
+    else:
+        form = CustomerProfileForm(instance=customer)
+    return render(request, 'edit_profile.html', {'form': form})
